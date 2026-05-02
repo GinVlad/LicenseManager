@@ -1,0 +1,639 @@
+basePath: /api/v1
+definitions:
+  models.APIResponse:
+    properties:
+      data: {}
+      error:
+        type: string
+      success:
+        type: boolean
+    type: object
+  models.AddHWIDRequest:
+    properties:
+      deviceName:
+        type: string
+      hwid:
+        type: string
+    required:
+    - hwid
+    type: object
+  models.AdminLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.Application:
+    properties:
+      apiKey:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      maxHwidPerLicense:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  models.CreateAppRequest:
+    properties:
+      maxHwidPerLicense:
+        example: 2
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  models.CreateLicenseRequest:
+    properties:
+      appId:
+        type: string
+      days:
+        type: integer
+      maxHwid:
+        type: integer
+      maxThreads:
+        type: integer
+      note:
+        type: string
+      plan:
+        type: string
+      userId:
+        type: string
+    required:
+    - appId
+    - days
+    - plan
+    type: object
+  models.License:
+    properties:
+      appId:
+        type: string
+      createdAt:
+        type: string
+      expiresAt:
+        type: string
+      id:
+        type: string
+      isActive:
+        type: boolean
+      key:
+        type: string
+      lastValidatedAt:
+        type: string
+      maxHwid:
+        type: integer
+      maxThreads:
+        type: integer
+      note:
+        type: string
+      plan:
+        type: string
+      userId:
+        type: string
+    type: object
+  models.LicenseHWID:
+    properties:
+      deviceName:
+        type: string
+      firstSeenAt:
+        type: string
+      hwid:
+        type: string
+      id:
+        type: string
+      lastSeenAt:
+        type: string
+      licenseId:
+        type: string
+    type: object
+  models.UpdateAppRequest:
+    properties:
+      maxHwidPerLicense:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  models.UpdateLicenseRequest:
+    properties:
+      days:
+        type: integer
+      isActive:
+        type: boolean
+      maxHwid:
+        type: integer
+      maxThreads:
+        type: integer
+      note:
+        type: string
+    type: object
+  models.ValidateRequest:
+    properties:
+      appSlug:
+        type: string
+      deviceName:
+        maxLength: 100
+        type: string
+      hwid:
+        maxLength: 64
+        type: string
+      key:
+        maxLength: 32
+        type: string
+    required:
+    - appSlug
+    - hwid
+    - key
+    type: object
+  models.ValidateResponse:
+    properties:
+      devices:
+        items:
+          $ref: '#/definitions/models.LicenseHWID'
+        type: array
+      error:
+        type: string
+      expiresAt:
+        type: string
+      maxThreads:
+        type: integer
+      valid:
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Self-hosted license management server. Admin routes require Bearer
+    JWT; client routes require X-App-Key header.
+  title: LicenseManager API
+  version: "1.0"
+paths:
+  /admin/apps:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Application'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List applications
+      tags:
+      - apps
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: App info
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAppRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Application'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Create application
+      tags:
+      - apps
+  /admin/apps/{id}:
+    delete:
+      parameters:
+      - description: App ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete an application
+      tags:
+      - apps
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: App ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update (all optional)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateAppRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an application
+      tags:
+      - apps
+  /admin/hwids/{id}:
+    delete:
+      parameters:
+      - description: HWID record ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove a device binding
+      tags:
+      - hwids
+  /admin/licenses:
+    get:
+      parameters:
+      - description: Filter by app ID
+        in: query
+        name: appId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.License'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List licenses
+      tags:
+      - licenses
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: License details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateLicenseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.License'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Issue a license key
+      tags:
+      - licenses
+  /admin/licenses/{id}:
+    delete:
+      parameters:
+      - description: License ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a license
+      tags:
+      - licenses
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: License ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update (all optional)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateLicenseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a license
+      tags:
+      - licenses
+  /admin/licenses/{id}/hwids:
+    get:
+      parameters:
+      - description: License ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.LicenseHWID'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: List devices bound to a license
+      tags:
+      - hwids
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: License ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Device info
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AddHWIDRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.LicenseHWID'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Manually add a device binding
+      tags:
+      - hwids
+  /admin/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AdminLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  properties:
+                    token:
+                      type: string
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      summary: Admin login
+      tags:
+      - auth
+  /license/hwid:
+    delete:
+      parameters:
+      - description: License ID
+        in: query
+        name: licenseId
+        required: true
+        type: string
+      - description: HWID record ID
+        in: query
+        name: hwidId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - AppApiKey: []
+      summary: Remove a device binding (client-side)
+      tags:
+      - license
+  /license/validate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Validation payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ValidateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ValidateResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.APIResponse'
+      security:
+      - AppApiKey: []
+      summary: Validate a license key
+      tags:
+      - license
+securityDefinitions:
+  AppApiKey:
+    description: API key issued per application (shown on app creation).
+    in: header
+    name: X-App-Key
+    type: apiKey
+  BearerAuth:
+    description: Type "Bearer" followed by a space and the JWT token from /admin/login.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

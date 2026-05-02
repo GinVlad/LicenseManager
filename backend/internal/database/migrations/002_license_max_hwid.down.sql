@@ -1,0 +1,5 @@
+BEGIN;
+
+ALTER TABLE licenses DROP COLUMN max_hwid;
+
+COMMIT;

@@ -22,12 +22,20 @@ func CORS(allowedOrigins []string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		if allowed[origin] || len(allowedOrigins) == 0 {
+		if len(allowedOrigins) == 0 {
+			// Allow all mode
+			c.Header("Access-Control-Allow-Origin", "*")
+			c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-App-Key")
+			c.Header("Access-Control-Max-Age", "86400")
+		} else if allowed[origin] {
+			// Strict mode
 			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
 			c.Header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-App-Key")
 			c.Header("Access-Control-Max-Age", "86400")
 		}
+
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return

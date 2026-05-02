@@ -1,4 +1,5 @@
-const BASE = import.meta.env.VITE_API_URL || '/api/v1';
+const rawBase = import.meta.env.VITE_API_URL || '/api/v1';
+const BASE = rawBase.replace(/\/+$/, '');
 
 let _token = localStorage.getItem('lm_token') || '';
 
